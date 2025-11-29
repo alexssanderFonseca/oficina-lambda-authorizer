@@ -1,163 +1,121 @@
-# lambda-authorizer
+# 🛡️ lambda-authorizer
 
-Congratulations, you have just created a Serverless "Hello World" application using the AWS Serverless Application Model (AWS SAM) for the `python3.12` runtime, and options to bootstrap it with [**AWS Lambda Powertools for Python**](https://awslabs.github.io/aws-lambda-powertools-python/latest/) (Lambda Powertools) utilities for Logging, Tracing and Metrics.
+Este projeto implementa um Autorizador AWS Lambda utilizando Python e o AWS Serverless Application Model (SAM). Ele provê um endpoint no API Gateway que valida um CPF (Cadastro de Pessoas Físicas) através de um serviço externo e, em caso de validação bem-sucedida, gera um JSON Web Token (JWT) contendo um ID de usuário único. Este token pode então ser usado para autorizar requisições subsequentes a outros serviços.
 
-Powertools is a developer toolkit to implement Serverless best practices and increase developer velocity.
+A aplicação utiliza o [**AWS Lambda Powertools for Python**](https://awslabs.github.io/aws-lambda-powertools-python/latest/) para as melhores práticas de desenvolvimento serverless, incluindo logging estruturado, rastreamento (tracing) e métricas personalizadas.
 
-## Powertools features
+## ✨ Funcionalidades
 
-Powertools provides three core utilities:
+*   **Validação Segura de CPF**: 🎯 Recebe um CPF via requisição POST e valida sua existência e autenticidade chamando um serviço externo de clientes.
+*   **Geração de JWT**: 🔑 Após a validação bem-sucedida, gera um JWT assinado com uma chave secreta. O payload do JWT inclui um ID de usuário único não sensível (`sub` claim), garantindo que informações pessoais sensíveis (como o CPF) não sejam expostas diretamente no token.
+*   **Tratamento Robusto de Erros**:
+    *   Retorna `400 Bad Request` (Requisição Inválida) se o CPF não for fornecido na requisição.
+    *   Retorna `404 Not Found` (Não Encontrado) se o serviço externo de clientes não encontrar um cliente associado ao CPF fornecido.
+*   **Observabilidade com AWS Lambda Powertools**: 📊 Integra Logging, Tracing e Métricas para fornecer insights aprofundados sobre a operação da função Lambda.
+*   **Tipagem Estrita (Type Hinting)**: 📝 O código-fonte é totalmente tipado, melhorando a legibilidade, manutenibilidade e permitindo a análise estática.
+*   **Testes Unitários**: ✅ Testes unitários abrangentes usando `pytest` e `pytest-mock` garantem a confiabilidade da lógica da aplicação.
 
-- **[Tracing](https://awslabs.github.io/aws-lambda-powertools-python/latest/core/tracer/)** - Decorators and utilities to trace Lambda function handlers, and both synchronous and asynchronous functions
-- **[Logging](https://awslabs.github.io/aws-lambda-powertools-python/latest/core/logger/)** - Structured logging made easier, and decorator to enrich structured logging with key Lambda context details
-- **[Metrics](https://awslabs.github.io/aws-lambda-powertools-python/latest/core/metrics/)** - Custom Metrics created asynchronously via CloudWatch Embedded Metric Format (EMF)
+## 📁 Estrutura do Projeto
 
-Find the complete project's [documentation here](https://awslabs.github.io/aws-lambda-powertools-python).
+*   `app/`: Contém a função Lambda principal (`app.py`) e suas dependências específicas (`requirements.txt`).
+*   `service/`: Abriga módulos de lógica de negócios, incluindo `customer_service.py` (para chamadas à API externa de clientes) e `jwt_generator.py` (para criação de JWT).
+*   `events/`: Exemplos de eventos de invocação para testes locais.
+*   `tests/`: Testes unitários e de integração para a aplicação.
+    *   `tests/unit/test_handler.py`: Contém testes unitários para o handler principal da Lambda.
+    *   `tests/conftest.py`: Define fixtures do `pytest` para simular eventos do API Gateway.
+*   `template.yaml`: Define os recursos AWS da aplicação usando AWS SAM.
 
-### Installing AWS Lambda Powertools for Python
+## 💻 Desenvolvimento Local e Testes
 
-With [pip](https://pip.pypa.io/en/latest/index.html) installed, run:
+### Pré-requisitos
+
+*   [SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
+*   [Python 3.12](https://www.python.org/downloads/)
+*   [Docker](https://hub.docker.com/search/?type=edition&offering=community)
+*   Um ambiente virtual (ex: `python3.12 -m venv .venv`)
+
+### Configuração
+
+1.  **Ativar Ambiente Virtual**:
+    ```bash
+    source .venv/bin/activate
+    ```
+2.  **Instalar Dependências**:
+    ```bash
+    pip install -r app/requirements.txt
+    pip install -r tests/requirements.txt
+    ```
+3.  **Configurar URL do Serviço Externo de Clientes**:
+    O módulo `service/customer_service.py` faz chamadas a uma API externa. Configure sua URL usando uma variável de ambiente. Para testes locais, você pode exportá-la em seu shell:
+    ```bash
+    export CUSTOMER_API_URL="http://sua-api-externa-de-clientes.com/clientes"
+    # Exemplo: export CUSTOMER_API_URL="http://localhost:8080/clientes" se estiver rodando uma API mock local
+    ```
+
+### Executando Testes Unitários
+
+Para executar os testes unitários:
 
 ```bash
-pip install aws-lambda-powertools
+pytest tests/unit -v
 ```
 
-### Powertools Examples
+### Executando a Aplicação Localmente
 
-- [Tutorial](https://awslabs.github.io/aws-lambda-powertools-python/latest/tutorial)
-- [Serverless Shopping cart](https://github.com/aws-samples/aws-serverless-shopping-cart)
-- [Serverless Airline](https://github.com/aws-samples/aws-serverless-airline-booking)
-- [Serverless E-commerce platform](https://github.com/aws-samples/aws-serverless-ecommerce-platform)
-- [Serverless GraphQL Nanny Booking Api](https://github.com/trey-rosius/babysitter_api)
+O SAM CLI pode emular a API da sua aplicação localmente.
 
-## Working with this project
+1.  **Construa sua aplicação**:
+    ```bash
+    sam build --use-container
+    ```
+2.  **Inicie o API Gateway local**:
+    ```bash
+    sam local start-api
+    ```
+    Isso geralmente tornará a API disponível em `http://127.0.0.1:3000`.
 
-This project contains source code and supporting files for a serverless application that you can deploy with the SAM CLI. It includes the following files and folders.
+3.  **Invoque a API**:
 
-- hello_world - Code for the application's Lambda function.
-- events - Invocation events that you can use to invoke the function.
-- tests - Unit tests for the application code.
-- template.yaml - A template that defines the application's AWS resources.
+    *   **POST / (Gerar Token - Sucesso)**: 🚀
+        ```bash
+        curl -X POST -H "Content-Type: application/json" -d '{"cpf": "12345678909"}' http://127.0.0.1:3000/
+        ```
+        (Substitua `12345678909` por um CPF que sua `CUSTOMER_API_URL` mockada retornaria um cliente).
 
-The application uses several AWS resources, including Lambda functions and an API Gateway API. These resources are defined in the `template.yaml` file in this project. You can update the template to add AWS resources through the same deployment process that updates your application code.
+    *   **POST / (Gerar Token - Cliente Não Encontrado)**: 🕵️‍♀️
+        ```bash
+        curl -X POST -H "Content-Type: application/json" -d '{"cpf": "99988877766"}' http://127.0.0.1:3000/
+        ```
+        (Substitua `99988877766` por um CPF que sua `CUSTOMER_API_URL` mockada retornaria 404).
 
-If you prefer to use an integrated development environment (IDE) to build and test your application, you can use the AWS Toolkit.  
-The AWS Toolkit is an open source plug-in for popular IDEs that uses the SAM CLI to build and deploy serverless applications on AWS. The AWS Toolkit also adds a simplified step-through debugging experience for Lambda function code. See the following links to get started.
+    *   **POST / (Gerar Token - CPF Ausente)**: 🚫
+        ```bash
+        curl -X POST -H "Content-Type: application/json" -d '{}' http://127.0.0.1:3000/
+        ```
 
-- [CLion](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-- [GoLand](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-- [IntelliJ](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-- [WebStorm](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-- [Rider](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-- [PhpStorm](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-- [PyCharm](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-- [RubyMine](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-- [DataGrip](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-- [VS Code](https://docs.aws.amazon.com/toolkit-for-vscode/latest/userguide/welcome.html)
-- [Visual Studio](https://docs.aws.amazon.com/toolkit-for-visual-studio/latest/user-guide/welcome.html)
+    *   **GET /hello**: 👋
+        ```bash
+        curl http://127.0.0.1:3000/hello
+        ```
 
-### Deploy the sample application
+## 🚀 Deployment
 
-The Serverless Application Model Command Line Interface (SAM CLI) is an extension of the AWS CLI that adds functionality for building and testing Lambda applications. It uses Docker to run your functions in an Amazon Linux environment that matches Lambda. It can also emulate your application's build environment and API.
-
-To use the SAM CLI, you need the following tools.
-
-- SAM CLI - [Install the SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
-- [Python 3 installed](https://www.python.org/downloads/)
-- Docker - [Install Docker community edition](https://hub.docker.com/search/?type=edition&offering=community)
-
-To build and deploy your application for the first time, run the following in your shell:
+Para fazer o deploy da sua aplicação na AWS, siga o processo padrão de deploy do SAM CLI:
 
 ```bash
-sam build --use-container
 sam deploy --guided
 ```
 
-The first command will build the source of your application. The second command will package and deploy your application to AWS, with a series of prompts:
+Siga as instruções para configurar seu deploy (Nome da Stack, Região AWS, etc.).
 
-- **Stack Name**: The name of the stack to deploy to CloudFormation. This should be unique to your account and region, and a good starting point would be something matching your project name.
-- **AWS Region**: The AWS region you want to deploy your app to.
-- **Confirm changes before deploy**: If set to yes, any change sets will be shown to you before execution for manual review. If set to no, the AWS SAM CLI will automatically deploy application changes.
-- **Allow SAM CLI IAM role creation**: Many AWS SAM templates, including this example, create AWS IAM roles required for the AWS Lambda function(s) included to access AWS services. By default, these are scoped down to minimum required permissions. To deploy an AWS CloudFormation stack which creates or modifies IAM roles, the `CAPABILITY_IAM` value for `capabilities` must be provided. If permission isn't provided through this prompt, to deploy this example you must explicitly pass `--capabilities CAPABILITY_IAM` to the `sam deploy` command.
-- **Save arguments to samconfig.toml**: If set to yes, your choices will be saved to a configuration file inside the project, so that in the future you can just re-run `sam deploy` without parameters to deploy changes to your application.
+## 🧹 Limpeza
 
-You can find your API Gateway Endpoint URL in the output values displayed after deployment.
-
-### Use the SAM CLI to build and test locally
-
-Build your application with the `sam build --use-container` command.
+Para deletar os recursos AWS que foram deployados:
 
 ```bash
-lambda-authorizer$ sam build --use-container
+sam delete --stack-name "nome-da-sua-stack"
 ```
 
-The SAM CLI installs dependencies defined in `hello_world/requirements.txt`, creates a deployment package, and saves it in the `.aws-sam/build` folder.
+## 📚 Recursos Adicionais
 
-Test a single function by invoking it directly with a test event. An event is a JSON document that represents the input that the function receives from the event source. Test events are included in the `events` folder in this project.
-
-Run functions locally and invoke them with the `sam local invoke` command.
-
-```bash
-lambda-authorizer$ sam local invoke HelloWorldFunction --event events/event.json
-```
-
-The SAM CLI can also emulate your application's API. Use the `sam local start-api` to run the API locally on port 3000.
-
-```bash
-lambda-authorizer$ sam local start-api
-lambda-authorizer$ curl http://localhost:3000/
-```
-
-The SAM CLI reads the application template to determine the API's routes and the functions that they invoke. The `Events` property on each function's definition includes the route and method for each path.
-
-```yaml
-Events:
-  HelloWorld:
-    Type: Api
-    Properties:
-      Path: /hello
-      Method: get
-```
-
-### Add a resource to your application
-
-The application template uses AWS Serverless Application Model (AWS SAM) to define application resources. AWS SAM is an extension of AWS CloudFormation with a simpler syntax for configuring common serverless application resources such as functions, triggers, and APIs. For resources not included in [the SAM specification](https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md), you can use standard [AWS CloudFormation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html) resource types.
-
-### Fetch, tail, and filter Lambda function logs
-
-To simplify troubleshooting, SAM CLI has a command called `sam logs`. `sam logs` lets you fetch logs generated by your deployed Lambda function from the command line. In addition to printing the logs on the terminal, this command has several nifty features to help you quickly find the bug.
-
-`NOTE`: This command works for all AWS Lambda functions; not just the ones you deploy using SAM.
-
-```bash
-lambda-authorizer$ sam logs -n HelloWorldFunction --stack-name lambda-authorizer --tail
-```
-
-You can find more information and examples about filtering Lambda function logs in the [SAM CLI Documentation](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-logging.html).
-
-### Tests
-
-Tests are defined in the `tests` folder in this project. Use PIP to install the test dependencies and run tests.
-
-```bash
-lambda-authorizer$ pip install -r tests/requirements.txt --user
-# unit test
-lambda-authorizer$ python -m pytest tests/unit -v
-# integration test, requiring deploying the stack first.
-# Create the env variable AWS_SAM_STACK_NAME with the name of the stack we are testing
-lambda-authorizer$ AWS_SAM_STACK_NAME="lambda-authorizer" python -m pytest tests/integration -v
-```
-
-### Cleanup
-
-To delete the sample application that you created, use the AWS CLI. Assuming you used your project name for the stack name, you can run the following:
-
-```bash
-sam delete --stack-name "lambda-authorizer"
-```
-
-## Resources
-
-See the [AWS SAM developer guide](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html) for an introduction to SAM specification, the SAM CLI, and serverless application concepts.
-
-Next, you can use AWS Serverless Application Repository to deploy ready to use Apps that go beyond hello world samples and learn how authors developed their applications: [AWS Serverless Application Repository main page](https://aws.amazon.com/serverless/serverlessrepo/)
+Consulte o [guia do desenvolvedor AWS SAM](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html) para uma introdução à especificação SAM, o SAM CLI e conceitos de aplicações serverless.
