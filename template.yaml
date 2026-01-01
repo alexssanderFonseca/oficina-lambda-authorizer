@@ -3,65 +3,54 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   lambda-authorizer
 
-  Powertools example
+  Sample SAM Template for lambda-authorizer
 
-Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-specification-template-anatomy-globals.html
-  Function:
-    Timeout: 5
-    MemorySize: 128
-    Runtime: python3.12
+Parameters:
+  Stage:
+    Type: String
+    Default: staging
+    AllowedValues:
+      - staging
+      - prod
+    Description: The stage of deployment (e.g., staging, prod).
+  LambdaExecutionRole:
+    Type: String
+    Description: ARN of the IAM role for the Lambda function to use.
 
-    Tracing: Active
-    # You can add LoggingConfig parameters such as the Logformat, Log Group, and SystemLogLevel or ApplicationLogLevel. Learn more here https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
-    LoggingConfig:
-      LogFormat: JSON
-  Api:
-    TracingEnabled: true
+Mappings:
+  EnvironmentMap:
+    staging:
+      DB_NAME: "db_staging"
+    prod:
+      DB_NAME: "db_prod"
+
 Resources:
-  HelloWorldFunction:
-    Type: AWS::Serverless::Function     # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
+  AuthorizerFunction:
+    Type: AWS::Serverless::Function
     Properties:
+      CodeUri: app/
       Handler: app.lambda_handler
-      CodeUri: hello_world
-      Description: Hello World function
-      Architectures:
-      - x86_64
-      Tracing: Active
+      Description: Authorizer function
+      Runtime: python3.12
+      Role: !Ref LambdaExecutionRole 
       Events:
-        HelloPath:
-          Type: Api           # More info about API Event Source: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-function-api.html
+        AuthApi:
+          Type: Api
           Properties:
-            Path: /hello
-            Method: GET
-             # Powertools env vars: https://awslabs.github.io/aws-lambda-powertools-python/#environment-variables
+            Path: /auth
+            Method: post
       Environment:
         Variables:
-          POWERTOOLS_SERVICE_NAME: PowertoolsHelloWorld
-          POWERTOOLS_METRICS_NAMESPACE: Powertools
-          LOG_LEVEL: INFO
-      Tags:
-        LambdaPowertools: python
+          SECRET_NAME: "rds-academico-credentials-1" 
+          DB_NAME: !FindInMap [EnvironmentMap, !Ref Stage, DB_NAME]
 
-  ApplicationResourceGroup:
-    Type: AWS::ResourceGroups::Group
-    Properties:
-      Name:
-        Fn::Sub: ApplicationInsights-SAM-${AWS::StackName}
-      ResourceQuery:
-        Type: CLOUDFORMATION_STACK_1_0
-  ApplicationInsightsMonitoring:
-    Type: AWS::ApplicationInsights::Application
-    Properties:
-      ResourceGroupName:
-        Ref: ApplicationResourceGroup
-      AutoConfigurationEnabled: 'true'
 Outputs:
-  HelloWorldApi:
-    Description: API Gateway endpoint URL for Prod environment for Hello World 
-      Function
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod/hello"
-
-  HelloWorldFunction:
-    Description: Hello World Lambda Function ARN
-    Value: !GetAtt HelloWorldFunction.Arn
-
+  AuthApi:
+    Description: !Sub "API Gateway endpoint URL for \${Stage} stage for Auth function"
+    Value: !Sub "https://\${ServerlessRestApi}.execute-api.\${AWS::Region}.amazonaws.com/Prod/auth"
+  AuthorizerFunction:
+    Description: !Sub "Auth Lambda Function ARN for \${Stage}"
+    Value: !GetAtt AuthorizerFunction.Arn
+  AuthorizerFunctionIamRole:
+    Description: !Sub "Implicit IAM Role created for Auth function for \${Stage}"
+    Value: !Ref LambdaExecutionRole # Referencing the passed role
