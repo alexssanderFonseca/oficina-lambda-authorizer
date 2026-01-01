@@ -1,4 +1,4 @@
-name: CD
+name: Deploy PROD & Staging
 
 on:
   push:
@@ -7,13 +7,16 @@ on:
       - staging
 
 jobs:
+  validate:
+    uses: ./.github/workflows/reusable-build-and-test.yml
+
   deploy:
     runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'push'
     permissions:
-      id-token: write # Required for aws-actions/configure-aws-credentials
-      contents: read # Required to checkout the repo
-    # Estes passos dependem do sucesso do job 'build-and-test' do workflow de CI.
-    # needs: build-and-test
+      id-token: write
+      contents: read
     
     steps:
       - name: Checkout repository
@@ -75,9 +78,11 @@ jobs:
         working-directory: lambda-authorizer/terraform
 
       - name: Build SAM application
+        working-directory: ./lambda-authorizer
         run: sam build
 
       - name: Deploy SAM application
+        working-directory: ./lambda-authorizer
         run: >
           sam deploy --no-confirm --no-fail-on-empty-changeset
           --stack-name lambda-authorizer-${{ env.STAGE_NAME }}

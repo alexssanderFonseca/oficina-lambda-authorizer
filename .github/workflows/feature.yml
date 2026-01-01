@@ -1,0 +1,10 @@
+name: CI Feature Validation
+
+on:
+  push:
+    branches:
+      - 'feature/**'
+
+jobs:
+  call-reusable-workflow:
+    uses: ./.github/workflows/reusable-build-and-test.yml

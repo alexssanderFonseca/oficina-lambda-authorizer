@@ -46,11 +46,10 @@ Resources:
 
 Outputs:
   AuthApi:
-    Description: !Sub "API Gateway endpoint URL for \${Stage} stage for Auth function"
+    Description: !Sub "API Gateway endpoint URL for ${Stage} stage for Auth function"
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/auth"
   AuthorizerFunction:
-    Description: !Sub "Auth Lambda Function ARN for \${Stage}"
+    Description: !Sub "Auth Lambda Function ARN for ${Stage}"
     Value: !GetAtt AuthorizerFunction.Arn
   AuthorizerFunctionIamRole:
-    Description: !Sub "Implicit IAM Role created for Auth function for \${Stage}"
-    Value: !Ref LambdaExecutionRole # Referencing the passed role
+    Description: !Sub "Implicit IAM Role created for Auth function for ${Stage}"
