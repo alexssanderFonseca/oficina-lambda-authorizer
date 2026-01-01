@@ -52,7 +52,7 @@ jobs:
         id: get_secret_arn
         run: |
           SECRET_ARN=$(aws secretsmanager describe-secret --secret-id rds-academico-credentials-1 --query 'ARN' --output text --region us-east-1)
-          echo "RDS_SECRET_ARN=$SECRET_ENV" >> $GITHUB_ENV # Changed from RDS_SECRET_ARN to RDS_SECRET_ENV
+          echo "RDS_SECRET_ARN=$SECRET_ARN" >> $GITHUB_ENV
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
