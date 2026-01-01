@@ -75,14 +75,14 @@ jobs:
           LAMBDA_ROLE_ARN=$(terraform output -raw lambda_exec_role_arn)
           echo "SAM_ARTIFACTS_BUCKET=$SAM_BUCKET" >> $GITHUB_ENV
           echo "LAMBDA_EXEC_ROLE_ARN=$LAMBDA_ROLE_ARN" >> $GITHUB_ENV
-        working-directory: lambda-authorizer/terraform
+        working-directory: ./terraform
 
       - name: Build SAM application
-        working-directory: ./lambda-authorizer
+        working-directory: ./
         run: sam build
 
       - name: Deploy SAM application
-        working-directory: ./lambda-authorizer
+        working-directory: ./
         run: >
           sam deploy --no-confirm --no-fail-on-empty-changeset
           --stack-name lambda-authorizer-${{ env.STAGE_NAME }}
