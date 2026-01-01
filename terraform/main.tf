@@ -1,10 +1,10 @@
 data "aws_caller_identity" "current" {}
 
 resource "aws_s3_bucket" "sam_artifacts" {
-  bucket = "\${var.project_name}-sam-artifacts-\${data.aws_caller_identity.current.account_id}"
+  bucket = "${var.project_name}-sam-artifacts-${data.aws_caller_identity.current.account_id}"
 
   tags = {
-    Name = "\${var.project_name}-sam-artifacts"
+    Name = "${var.project_name}-sam-artifacts"
   }
 }
 
@@ -24,7 +24,7 @@ resource "aws_s3_bucket_public_access_block" "sam_artifacts_block_public_access"
 }
 
 resource "aws_iam_role" "lambda_exec_role" {
-  name = "\${var.project_name}-lambda-exec-role"
+  name = "${var.project_name}-lambda-exec-role"
 
   assume_role_policy = jsonencode({
     Version   = "2012-10-17",
@@ -40,7 +40,7 @@ resource "aws_iam_role" "lambda_exec_role" {
   })
 
   tags = {
-    Name = "\${var.project_name}-lambda-exec-role"
+    Name = "${var.project_name}-lambda-exec-role"
   }
 }
 
@@ -50,7 +50,7 @@ resource "aws_iam_role_policy_attachment" "lambda_vpc_access" {
 }
 
 resource "aws_iam_policy" "secrets_manager_policy" {
-  name        = "\${var.project_name}-secrets-manager-policy"
+  name        = "${var.project_name}-secrets-manager-policy"
   description = "Policy to allow access to specific secrets in AWS Secrets Manager"
 
   policy = jsonencode({
