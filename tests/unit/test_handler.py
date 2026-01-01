@@ -1,8 +1,11 @@
+import os
+os.environ["POWERTOOLS_TRACE_DISABLED"] = "1"
+
 import json
 import uuid
 from typing import Any, Dict
 from pytest_mock import MockerFixture
-from app.app import lambda_handler # Updated import
+from app.app import lambda_handler 
 
 def lambda_context() -> object:
     class LambdaContext:
