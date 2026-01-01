@@ -1,11 +1,9 @@
 import os
+os.environ["POWERTOOLS_TRACE_DISABLED"] = "1"
+
 import pytest
 import json
 from typing import Dict, Any
-
-def pytest_configure(config):
-    """Disable powertools tracer for all tests."""
-    os.environ["POWERTOOLS_TRACE_DISABLED"] = "1"
 
 @pytest.fixture
 def apigw_event_post_cpf() -> Dict[str, Any]:
