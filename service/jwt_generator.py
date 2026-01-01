@@ -1,9 +1,10 @@
 import jwt
 import datetime
+import os
 from typing import Dict, Any
 
 # TODO: Store this secret securely, for example in AWS Secrets Manager
-JWT_SECRET: str = "your-super-secret"
+JWT_SECRET: str | None = os.environ.get("JWT_SECRET")
 
 def generate_jwt(user_id: str) -> str:
     """

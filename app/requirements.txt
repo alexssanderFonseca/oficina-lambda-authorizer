@@ -2,3 +2,4 @@ aws-lambda-powertools
 PyJWT
 requests
 psycopg2-binary
+boto3

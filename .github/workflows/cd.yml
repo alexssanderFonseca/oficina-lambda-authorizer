@@ -1,0 +1,89 @@
+name: CD
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # Required for aws-actions/configure-aws-credentials
+      contents: read # Required to checkout the repo
+    # Estes passos dependem do sucesso do job 'build-and-test' do workflow de CI.
+    # needs: build-and-test
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+          
+      - name: Set up SAM CLI
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Determine stage name
+        id: stage
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "STAGE_NAME=prod" >> $GITHUB_ENV
+          elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+            echo "STAGE_NAME=staging" >> $GITHUB_ENV
+          fi
+
+      - name: Get RDS Secret ARN
+        id: get_secret_arn
+        run: |
+          SECRET_ARN=$(aws secretsmanager describe-secret --secret-id rds-academico-credentials-1 --query 'ARN' --output text --region us-east-1)
+          echo "RDS_SECRET_ARN=$SECRET_ARN" >> $GITHUB_ENV
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.x
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: lambda-authorizer/terraform
+
+      - name: Terraform Apply
+        id: terraform_apply
+        run: terraform apply -auto-approve -input=false -var="rds_secret_arn=${{ env.RDS_SECRET_ARN }}"
+        working-directory: lambda-authorizer/terraform
+
+      - name: Get Terraform Outputs
+        id: terraform_outputs
+        run: |
+          SAM_BUCKET=$(terraform output -raw sam_artifacts_bucket_name)
+          LAMBDA_ROLE_ARN=$(terraform output -raw lambda_exec_role_arn)
+          echo "SAM_ARTIFACTS_BUCKET=$SAM_BUCKET" >> $GITHUB_ENV
+          echo "LAMBDA_EXEC_ROLE_ARN=$LAMBDA_ROLE_ARN" >> $GITHUB_ENV
+        working-directory: lambda-authorizer/terraform
+
+      - name: Build SAM application
+        run: sam build
+
+      - name: Deploy SAM application
+        run: >
+          sam deploy --no-confirm --no-fail-on-empty-changeset
+          --stack-name lambda-authorizer-${{ env.STAGE_NAME }}
+          --s3-bucket ${{ env.SAM_ARTIFACTS_BUCKET }}
+          --capabilities CAPABILITY_IAM
+          --region us-east-1
+          --parameter-overrides Stage=${{ env.STAGE_NAME }} LambdaExecutionRole=${{ env.LAMBDA_EXEC_ROLE_ARN }}
+        env:
+          SAM_CLI_TELEMETRY: 0

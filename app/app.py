@@ -35,25 +35,4 @@ def generate_token() -> Tuple[Dict[str, str], int]:
     else:
         logger.info(f"Customer not found for CPF: {cpf}")
         return {"message": "Cliente não encontrado"}, 404
-
-@app.get("/hello")
-@tracer.capture_method
-def hello() -> Dict[str, str]:
-    # adding custom metrics
-    # See: https://awslabs.github.io/aws-lambda-powertools-python/latest/core/metrics/
-    metrics.add_metric(name="HelloWorldInvocations", unit=MetricUnit.Count, value=1)
-
-    # structured log
-    # See: https://awslabs.github.io/aws-lambda-powertools-python/latest/core/logger/
-    logger.info("Hello world API - HTTP 200")
-    return {"message": "hello world"}
-
-# Enrich logging with contextual information from Lambda
-@logger.inject_lambda_context(correlation_id_path=correlation_paths.API_GATEWAY_REST)
-# Adding tracer
-# See: https://awslabs.github.io/aws-lambda-powertools-python/latest/core/tracer/
-@tracer.capture_lambda_handler
-# ensures metrics are flushed upon request completion/failure and capturing ColdStart metric
-@metrics.log_metrics(capture_cold_start_metric=True)
-def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, Any]:
-    return app.resolve(event, context)
+    
