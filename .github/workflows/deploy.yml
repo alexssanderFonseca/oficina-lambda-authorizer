@@ -61,12 +61,12 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
-        working-directory: lambda-authorizer/terraform
+        working-directory: ./terraform
 
       - name: Terraform Apply
         id: terraform_apply
         run: terraform apply -auto-approve -input=false -var="rds_secret_arn=${{ env.RDS_SECRET_ARN }}"
-        working-directory: lambda-authorizer/terraform
+        working-directory: ./terraform
 
       - name: Get Terraform Outputs
         id: terraform_outputs
