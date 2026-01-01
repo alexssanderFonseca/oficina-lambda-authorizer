@@ -68,6 +68,13 @@ jobs:
         run: terraform apply -auto-approve -input=false -var="rds_secret_arn=${{ env.RDS_SECRET_ARN }}"
         working-directory: terraform # Relative to lambda-authorizer
 
+      - name: Debug Terraform Outputs
+        working-directory: terraform
+        run: |
+          echo "--- START TERRAFORM OUTPUT ---"
+          terraform output -json || true
+          echo "--- END TERRAFORM OUTPUT ---"
+
       - name: Get Terraform Outputs
         id: terraform_outputs
         working-directory: terraform # Relative to lambda-authorizer
