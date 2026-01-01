@@ -52,7 +52,7 @@ jobs:
         id: get_secret_arn
         run: |
           SECRET_ARN=$(aws secretsmanager describe-secret --secret-id rds-academico-credentials-1 --query 'ARN' --output text --region us-east-1)
-          echo "RDS_SECRET_ARN=$SECRET_ARN" >> $GITHUB_ENV
+          echo "RDS_SECRET_ARN=$SECRET_ENV" >> $GITHUB_ENV # Changed from RDS_SECRET_ARN to RDS_SECRET_ENV
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
@@ -61,28 +61,28 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
-        working-directory: ./terraform
+        working-directory: terraform # Relative to lambda-authorizer
 
       - name: Terraform Apply
         id: terraform_apply
         run: terraform apply -auto-approve -input=false -var="rds_secret_arn=${{ env.RDS_SECRET_ARN }}"
-        working-directory: ./terraform
+        working-directory: terraform # Relative to lambda-authorizer
 
       - name: Get Terraform Outputs
         id: terraform_outputs
+        working-directory: terraform # Relative to lambda-authorizer
         run: |
-          SAM_BUCKET=$(terraform output -raw sam_artifacts_bucket_name)
-          LAMBDA_ROLE_ARN=$(terraform output -raw lambda_exec_role_arn)
+          SAM_BUCKET=$(terraform output -json | jq -r '.sam_artifacts_bucket_name.value')
+          LAMBDA_ROLE_ARN=$(terraform output -json | jq -r '.lambda_exec_role_arn.value')
           echo "SAM_ARTIFACTS_BUCKET=$SAM_BUCKET" >> $GITHUB_ENV
           echo "LAMBDA_EXEC_ROLE_ARN=$LAMBDA_ROLE_ARN" >> $GITHUB_ENV
-        working-directory: ./terraform
 
       - name: Build SAM application
-        working-directory: ./
+        # No working-directory needed here if it's the base
         run: sam build
 
       - name: Deploy SAM application
-        working-directory: ./
+        # No working-directory needed here if it's the base
         run: >
           sam deploy --no-confirm --no-fail-on-empty-changeset
           --stack-name lambda-authorizer-${{ env.STAGE_NAME }}
