@@ -1,4 +1,4 @@
-aws-lambda-powertools
+aws-lambda-powertools[all]
 PyJWT
 requests
 psycopg2-binary

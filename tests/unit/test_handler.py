@@ -1,3 +1,6 @@
+import os
+os.environ["POWERTOOLS_TRACE_DISABLED"] = "1"
+
 import json
 import uuid
 from typing import Any, Dict
