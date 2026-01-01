@@ -47,7 +47,7 @@ Resources:
 Outputs:
   AuthApi:
     Description: !Sub "API Gateway endpoint URL for \${Stage} stage for Auth function"
-    Value: !Sub "https://\${ServerlessRestApi}.execute-api.\${AWS::Region}.amazonaws.com/Prod/auth"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/auth"
   AuthorizerFunction:
     Description: !Sub "Auth Lambda Function ARN for \${Stage}"
     Value: !GetAtt AuthorizerFunction.Arn
