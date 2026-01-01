@@ -72,10 +72,10 @@ jobs:
         id: terraform_outputs
         working-directory: terraform # Relative to lambda-authorizer
         run: |
-          SAM_BUCKET=$(terraform output -json | jq -r '.sam_artifacts_bucket_name.value')
-          LAMBDA_ROLE_ARN=$(terraform output -json | jq -r '.lambda_exec_role_arn.value')
-          echo "SAM_ARTIFACTS_BUCKET=$SAM_BUCKET" >> $GITHUB_ENV
-          echo "LAMBDA_EXEC_ROLE_ARN=$LAMBDA_ROLE_ARN" >> $GITHUB_ENV
+          terraform output -json | jq -r '
+            "SAM_ARTIFACTS_BUCKET=\(.sam_artifacts_bucket_name.value)",
+            "LAMBDA_EXEC_ROLE_ARN=\(.lambda_exec_role_arn.value)"
+          ' >> $GITHUB_ENV
 
       - name: Build SAM application
         # No working-directory needed here if it's the base
