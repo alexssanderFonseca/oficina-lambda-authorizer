@@ -2,7 +2,7 @@ import json
 import uuid
 from typing import Any, Dict
 from pytest_mock import MockerFixture
-from app import app
+from app.app import lambda_handler # Updated import
 
 def lambda_context() -> object:
     class LambdaContext:
@@ -30,7 +30,7 @@ def test_generate_token_success_for_existing_customer(apigw_event_post_cpf: Dict
     # Mock the JWT generation
     mock_generate_jwt = mocker.patch("app.app.generate_jwt", return_value="mock_token")
     
-    ret: Dict[str, Any] = app.lambda_handler(apigw_event_post_cpf, lambda_context())
+    ret: Dict[str, Any] = lambda_handler(apigw_event_post_cpf, lambda_context()) # Updated call
     
     assert ret["statusCode"] == 200
     assert json.loads(ret["body"]) == {"token": "mock_token"}
@@ -49,7 +49,7 @@ def test_generate_token_returns_404_for_non_existing_customer(apigw_event_post_c
     # Mock the external service call to return None (customer not found)
     mock_get_customer = mocker.patch("app.app.get_customer_by_cpf", return_value=None)
     
-    ret: Dict[str, Any] = app.lambda_handler(apigw_event_post_cpf, lambda_context())
+    ret: Dict[str, Any] = lambda_handler(apigw_event_post_cpf, lambda_context()) # Updated call
     
     assert ret["statusCode"] == 404
     assert json.loads(ret["body"]) == {"message": "Cliente não encontrado"}
@@ -69,7 +69,7 @@ def test_generate_token_returns_400_if_cpf_is_missing(mocker: MockerFixture) -> 
         "requestContext": {"httpMethod": "POST", "path": "/"},
     }
     
-    ret: Dict[str, Any] = app.lambda_handler(event, lambda_context())
+    ret: Dict[str, Any] = lambda_handler(event, lambda_context()) # Updated call
     
     assert ret["statusCode"] == 400
     assert json.loads(ret["body"]) == {"message": "CPF não informado"}
