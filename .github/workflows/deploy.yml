@@ -74,6 +74,10 @@ jobs:
         run: |
           SAM_BUCKET_OUT=$(terraform output -raw sam_artifacts_bucket_name | grep -v '::')
           LAMBDA_ROLE_OUT=$(terraform output -raw lambda_exec_role_arn | grep -v '::')
+          
+          echo "Debug: SAM_BUCKET_OUT = '$SAM_BUCKET_OUT'"
+          echo "Debug: LAMBDA_ROLE_OUT = '$LAMBDA_ROLE_OUT'"
+
           echo "SAM_ARTIFACTS_BUCKET=$SAM_BUCKET_OUT" >> $GITHUB_ENV
           echo "LAMBDA_EXEC_ROLE_ARN=$LAMBDA_ROLE_OUT" >> $GITHUB_ENV
 
