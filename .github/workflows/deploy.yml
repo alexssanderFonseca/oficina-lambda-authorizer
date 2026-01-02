@@ -72,8 +72,10 @@ jobs:
         id: terraform_outputs
         working-directory: terraform
         run: |
+          echo "::stop-commands::terraform-output"
           terraform output -raw sam_artifacts_bucket_name > /tmp/sam_bucket.txt
           terraform output -raw lambda_exec_role_arn > /tmp/lambda_role.txt
+          echo "::terraform-output::"
           
           SAM_BUCKET_OUT=$(cat /tmp/sam_bucket.txt)
           LAMBDA_ROLE_OUT=$(cat /tmp/lambda_role.txt)
