@@ -20,9 +20,9 @@ Parameters:
 Mappings:
   EnvironmentMap:
     staging:
-      DB_NAME: "db_staging"
+      DBName: "db_staging"
     prod:
-      DB_NAME: "db_prod"
+      DBName: "db_prod"
 
 Resources:
   AuthorizerFunction:
@@ -42,7 +42,7 @@ Resources:
       Environment:
         Variables:
           SECRET_NAME: "rds-academico-credentials-1" 
-          DB_NAME: !FindInMap [EnvironmentMap, !Ref Stage, DB_NAME]
+          DBName: !FindInMap [EnvironmentMap, !Ref Stage, DBName]
 
 Outputs:
   AuthApi:
