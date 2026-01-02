@@ -72,10 +72,10 @@ jobs:
         id: terraform_outputs
         working-directory: terraform
         run: |
-          terraform output -json | jq -r '
-            "SAM_ARTIFACTS_BUCKET=\(.sam_artifacts_bucket_name.value)",
-            "LAMBDA_EXEC_ROLE_ARN=\(.lambda_exec_role_arn.value)"
-          ' >> $GITHUB_ENV
+          SAM_BUCKET_OUT=$(terraform output -raw sam_artifacts_bucket_name)
+          LAMBDA_ROLE_OUT=$(terraform output -raw lambda_exec_role_arn)
+          echo "SAM_ARTIFACTS_BUCKET=$SAM_BUCKET_OUT" >> $GITHUB_ENV
+          echo "LAMBDA_EXEC_ROLE_ARN=$LAMBDA_ROLE_OUT" >> $GITHUB_ENV
 
       - name: Build SAM application
         # No working-directory needed here if it's the base
