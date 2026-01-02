@@ -53,3 +53,4 @@ Outputs:
     Value: !GetAtt AuthorizerFunction.Arn
   AuthorizerFunctionIamRole:
     Description: !Sub "Implicit IAM Role created for Auth function for ${Stage}"
+    Value: !Ref LambdaExecutionRole
