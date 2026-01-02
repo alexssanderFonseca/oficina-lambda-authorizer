@@ -68,27 +68,14 @@ jobs:
         run: terraform apply -auto-approve -input=false -var="rds_secret_arn=${{ env.RDS_SECRET_ARN }}"
         working-directory: terraform # Relative to lambda-authorizer
 
-      - name: Debug Terraform Outputs (Raw JSON)
-        working-directory: terraform
-        run: |
-          echo "--- START RAW TF_OUTPUT_JSON ---"
-          terraform output -json || true # Output to debug
-          echo "--- END RAW TF_OUTPUT_JSON ---"
-
       - name: Get Terraform Outputs
         id: terraform_outputs
-        working-directory: terraform # Relative to lambda-authorizer
+        working-directory: terraform
         run: |
-          TF_OUTPUT_JSON=$(terraform output -json)
-          echo "--- TF_OUTPUT_JSON variable content ---"
-          echo "$TF_OUTPUT_JSON" # Debug: print the raw JSON
-          echo "--- END TF_OUTPUT_JSON variable content ---"
-
-          SAM_BUCKET=$(echo "$TF_OUTPUT_JSON" | jq -r '.sam_artifacts_bucket_name.value')
-          LAMBDA_ROLE_ARN=$(echo "$TF_OUTPUT_JSON" | jq -r '.lambda_exec_role_arn.value')
-          
-          echo "SAM_ARTIFACTS_BUCKET=$SAM_BUCKET" >> $GITHUB_ENV
-          echo "LAMBDA_EXEC_ROLE_ARN=$LAMBDA_ROLE_ARN" >> $GITHUB_ENV
+          terraform output -json | jq -r '
+            "SAM_ARTIFACTS_BUCKET=\(.sam_artifacts_bucket_name.value)",
+            "LAMBDA_EXEC_ROLE_ARN=\(.lambda_exec_role_arn.value)"
+          ' >> $GITHUB_ENV
 
       - name: Build SAM application
         # No working-directory needed here if it's the base
