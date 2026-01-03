@@ -61,5 +61,5 @@ jobs:
 
       - name: Terraform Apply
         id: terraform_apply
-        run: terraform apply -auto-approve -input=false -var="rds_secret_arn=${{ env.RDS_SECRET_ARN }}" -var="existing_api_gateway_name=${{ secrets.EXISTING_API_GATEWAY_NAME }}" -var="lambda_zip_path=../lambda.zip"
+        run: terraform apply -auto-approve -input=false -var="rds_secret_arn=${{ env.RDS_SECRET_ARN }}" -var="lambda_zip_path=../lambda.zip"
         working-directory: terraform

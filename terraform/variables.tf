@@ -18,6 +18,7 @@ variable "rds_secret_arn" {
 variable "existing_api_gateway_name" {
   description = "The name of the existing API Gateway to integrate with the Lambda authorizer."
   type        = string
+  default = "oficina-api"
 }
 
 variable "lambda_zip_path" {
