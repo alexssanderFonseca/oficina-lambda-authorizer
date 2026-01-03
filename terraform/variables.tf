@@ -26,7 +26,3 @@ variable "existing_api_gateway_name" {
   default = "oficina-api"
 }
 
-variable "lambda_zip_path" {
-  description = "The path to the Lambda function's deployment package (zip file)."
-  type        = string
-}
