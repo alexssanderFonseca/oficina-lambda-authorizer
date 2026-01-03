@@ -31,4 +31,4 @@ jobs:
           use-installer: true
 
       - name: Build SAM application
-        run: sam build
+        run: sam build AuthorizerFunction
