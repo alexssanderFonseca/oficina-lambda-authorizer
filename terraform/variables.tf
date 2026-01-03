@@ -15,11 +15,6 @@ variable "rds_secret_arn" {
   type        = string
 }
 
-variable "existing_api_gateway_id" {
-  description = "The ID of the existing API Gateway to integrate with the Lambda authorizer."
-  type        = string
-}
-
 variable "existing_api_gateway_name" {
   description = "The name of the existing API Gateway to integrate with the Lambda authorizer."
   type        = string
