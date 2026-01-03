@@ -103,7 +103,8 @@ resource "aws_lambda_function" "authorizer" {
 
 # API Gateway Integration
 data "aws_api_gateway_rest_api" "existing_api" {
-  id = var.existing_api_gateway_id
+  id   = var.existing_api_gateway_id
+  name = var.existing_api_gateway_name
 }
 
 resource "aws_api_gateway_resource" "clientes" {
