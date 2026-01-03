@@ -71,3 +71,33 @@ resource "aws_iam_role_policy_attachment" "secrets_manager_access" {
   role       = aws_iam_role.lambda_exec_role.name
   policy_arn = aws_iam_policy.secrets_manager_policy.arn
 }
+
+resource "null_resource" "sam_build" {
+  provisioner "local-exec" {
+    command = "sam build --template ../template.yaml --build-dir ../.aws-sam/build"
+  }
+
+  triggers = {
+    source_change = filesha256("../app/app.py")
+  }
+}
+
+resource "aws_cloudformation_stack" "lambda_authorizer_stack" {
+  name = "${var.project_name}-stack"
+
+  template_body = file("../.aws-sam/build/template.yaml")
+
+  parameters = {
+    LambdaExecutionRole  = aws_iam_role.lambda_exec_role.arn
+    ExistingApiGatewayId = var.existing_api_gateway_id
+    Stage                = "staging" 
+  }
+
+  capabilities = ["CAPABILITY_IAM", "CAPABILITY_NAMED_IAM"]
+
+  depends_on = [null_resource.sam_build]
+
+  tags = {
+    Name = "${var.project_name}-stack"
+  }
+}

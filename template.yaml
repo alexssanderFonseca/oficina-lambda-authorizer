@@ -16,6 +16,9 @@ Parameters:
   LambdaExecutionRole:
     Type: String
     Description: ARN of the IAM role for the Lambda function to use.
+  ExistingApiGatewayId:
+    Type: String
+    Description: The ID of an existing API Gateway to attach the Lambda to.
 
 Mappings:
   EnvironmentMap:
@@ -37,7 +40,8 @@ Resources:
         AuthApi:
           Type: Api
           Properties:
-            Path: /auth
+            RestApiId: !Ref ExistingApiGatewayId
+            Path: /clientes/login
             Method: post
       Environment:
         Variables:
@@ -45,9 +49,6 @@ Resources:
           DBName: !FindInMap [EnvironmentMap, !Ref Stage, DBName]
 
 Outputs:
-  AuthApi:
-    Description: "API Gateway endpoint URL for Auth function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/auth"
   AuthorizerFunction:
     Description: "Auth Lambda Function ARN"
     Value: !GetAtt AuthorizerFunction.Arn
