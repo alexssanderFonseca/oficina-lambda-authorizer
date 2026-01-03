@@ -24,11 +24,20 @@ jobs:
 
       - name: Run tests
         run: pytest
-          
-      - name: Set up SAM CLI
-        uses: aws-actions/setup-sam@v2
-        with:
-          use-installer: true
 
-      - name: Build SAM application
-        run: sam build AuthorizerFunction
+      - name: Create package
+        run: |
+          mkdir -p package
+          pip install -r app/requirements.txt -t package/
+          cp app/*.py package/
+
+      - name: Create zip file
+        run: |
+          cd package
+          zip -r ../lambda.zip .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: lambda-package
+          path: lambda.zip

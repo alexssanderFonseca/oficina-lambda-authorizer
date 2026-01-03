@@ -72,32 +72,89 @@ resource "aws_iam_role_policy_attachment" "secrets_manager_access" {
   policy_arn = aws_iam_policy.secrets_manager_policy.arn
 }
 
-resource "null_resource" "sam_build" {
-  provisioner "local-exec" {
-    command = "sam build --template ../template.yaml --build-dir ../.aws-sam/build"
+# Upload Lambda package to S3
+resource "aws_s3_object" "lambda_package" {
+  bucket = aws_s3_bucket.sam_artifacts.id
+  key    = "lambda-${filemd5(var.lambda_zip_path)}.zip"
+  source = var.lambda_zip_path
+}
+
+# Lambda Function
+resource "aws_lambda_function" "authorizer" {
+  function_name = "${var.project_name}-function"
+  role          = aws_iam_role.lambda_exec_role.arn
+  handler       = "app.lambda_handler"
+  runtime       = "python3.12"
+  s3_bucket     = aws_s3_object.lambda_package.bucket
+  s3_key        = aws_s3_object.lambda_package.key
+  source_code_hash = filebase64sha256(var.lambda_zip_path)
+
+  environment {
+    variables = {
+      SECRET_NAME = "rds-academico-credentials-1"
+      DBName      = "db_staging" # Adjust as needed, or create a map
+    }
   }
 
-  triggers = {
-    source_change = filesha256("../app/app.py")
+  tags = {
+    Name = "${var.project_name}-function"
   }
 }
 
-resource "aws_cloudformation_stack" "lambda_authorizer_stack" {
-  name = "${var.project_name}-stack"
+# API Gateway Integration
+data "aws_api_gateway_rest_api" "existing_api" {
+  id = var.existing_api_gateway_id
+}
 
-  template_body = file("../.aws-sam/build/template.yaml")
+resource "aws_api_gateway_resource" "clientes" {
+  rest_api_id = data.aws_api_gateway_rest_api.existing_api.id
+  parent_id   = data.aws_api_gateway_rest_api.existing_api.root_resource_id
+  path_part   = "clientes"
+}
 
-  parameters = {
-    LambdaExecutionRole  = aws_iam_role.lambda_exec_role.arn
-    ExistingApiGatewayId = var.existing_api_gateway_id
-    Stage                = "staging" 
+resource "aws_api_gateway_resource" "login" {
+  rest_api_id = data.aws_api_gateway_rest_api.existing_api.id
+  parent_id   = aws_api_gateway_resource.clientes.id
+  path_part   = "login"
+}
+
+resource "aws_api_gateway_method" "post" {
+  rest_api_id   = data.aws_api_gateway_rest_api.existing_api.id
+  resource_id   = aws_api_gateway_resource.login.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "lambda" {
+  rest_api_id             = data.aws_api_gateway_rest_api.existing_api.id
+  resource_id             = aws_api_gateway_resource.login.id
+  http_method             = aws_api_gateway_method.post.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.authorizer.invoke_arn
+}
+
+resource "aws_lambda_permission" "apigw" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.authorizer.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  source_arn = "${data.aws_api_gateway_rest_api.existing_api.execution_arn}/*/${aws_api_gateway_method.post.http_method}${aws_api_gateway_resource.login.path}"
+}
+
+resource "aws_api_gateway_deployment" "deploy" {
+  rest_api_id = data.aws_api_gateway_rest_api.existing_api.id
+  
+  triggers = {
+    redeployment = sha1(jsonencode([
+      aws_api_gateway_resource.login.id,
+      aws_api_gateway_method.post.id,
+      aws_api_gateway_integration.lambda.id,
+    ]))
   }
 
-  capabilities = ["CAPABILITY_IAM", "CAPABILITY_NAMED_IAM"]
-
-  depends_on = [null_resource.sam_build]
-
-  tags = {
-    Name = "${var.project_name}-stack"
+  lifecycle {
+    create_before_destroy = true
   }
 }
