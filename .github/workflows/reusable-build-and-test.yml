@@ -29,7 +29,7 @@ jobs:
         run: |
           mkdir -p package
           pip install -r app/requirements.txt -t package/
-          cp app/*.py package/
+          cp -r app/* package/
 
       - name: Create zip file
         run: |
