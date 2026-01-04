@@ -16,7 +16,8 @@ def generate_jwt(user_id: str, jwt_secret: str) -> str:
     """
     payload: Dict[str, Any] = {
         'sub': user_id,
-        'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)
+        'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1),
+        'role': 'ROLE_CLIENTE'
     }
     token: str = jwt.encode(payload, jwt_secret, algorithm="HS256")
     return token
