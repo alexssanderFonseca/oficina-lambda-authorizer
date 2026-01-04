@@ -82,6 +82,7 @@ resource "aws_s3_object" "lambda_package" {
 resource "aws_security_group" "lambda_sg" {
   name        = "${var.project_name}-lambda-sg"
   description = "Security group for the Lambda function"
+  vpc_id      = data.aws_vpc.selected.id
   
   egress {
     from_port   = 0
