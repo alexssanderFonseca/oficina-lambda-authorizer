@@ -7,19 +7,19 @@ variable "aws_region" {
 variable "project_name" {
   description = "The name of the project."
   type        = string
-  default     = "lambda-authorizer"
+  default     = "lambda-oficina-authorizer"
 }
 
 variable "rds_secret_arn" {
   description = "The ARN of the RDS secret containing database credentials."
   type        = string
-  default     = "YOUR_RDS_SECRET_ARN_HERE"
+  default     = "arn:aws:secretsmanager:us-east-1:305448253775:secret:secrets-XmZ0Fb"
 }
 
 variable "existing_api_gateway_name" {
   description = "The name of the existing API Gateway to integrate with the Lambda authorizer."
   type        = string
-  default     = "YOUR_API_GATEWAY_NAME_HERE"
+  default     = "oficina-api"
 }
 
 variable "lambda_zip_path" {

@@ -1,5 +1,6 @@
 import os
 os.environ["POWERTOOLS_TRACE_DISABLED"] = "1"
+os.environ["SECRET_NAME"] = "test_secret"
 
 import json
 import uuid
@@ -26,43 +27,46 @@ def test_generate_token_success_for_existing_customer(apigw_event_post_cpf: Dict
     """
     mock_user_id: str = str(uuid.uuid4())
     mock_customer: Dict[str, Any] = {"id": mock_user_id, "name": "Test User", "cpf": "12345678909"}
+    mock_secrets = {"host": "localhost", "jwt_secret": "secret"}
     
-    # Mock the external service call
+    # Mock the external service calls
+    mock_get_secret = mocker.patch("app.app.get_secret", return_value=mock_secrets)
     mock_get_customer = mocker.patch("app.app.get_customer_by_cpf", return_value=mock_customer)
-    
-    # Mock the JWT generation
     mock_generate_jwt = mocker.patch("app.app.generate_jwt", return_value="mock_token")
     
-    ret: Dict[str, Any] = lambda_handler(apigw_event_post_cpf, lambda_context()) # Updated call
+    ret: Dict[str, Any] = lambda_handler(apigw_event_post_cpf, lambda_context())
     
     assert ret["statusCode"] == 200
     assert json.loads(ret["body"]) == {"token": "mock_token"}
     
-    # Verify that get_customer_by_cpf was called with the correct CPF
-    mock_get_customer.assert_called_once_with("12345678909")
-    
-    # Verify that generate_jwt was called with the correct user ID
-    mock_generate_jwt.assert_called_once_with(mock_user_id)
+    mock_get_secret.assert_called_once_with("test_secret")
+    mock_get_customer.assert_called_once_with("12345678909", mock_secrets)
+    mock_generate_jwt.assert_called_once_with(mock_user_id, "secret")
 
 
 def test_generate_token_returns_404_for_non_existing_customer(apigw_event_post_cpf: Dict[str, Any], mocker: MockerFixture) -> None:
     """
     Tests if a 404 is returned for a non-existing customer.
     """
+    mock_secrets = {"host": "localhost", "jwt_secret": "secret"}
+
     # Mock the external service call to return None (customer not found)
+    mock_get_secret = mocker.patch("app.app.get_secret", return_value=mock_secrets)
     mock_get_customer = mocker.patch("app.app.get_customer_by_cpf", return_value=None)
     
-    ret: Dict[str, Any] = lambda_handler(apigw_event_post_cpf, lambda_context()) # Updated call
+    ret: Dict[str, Any] = lambda_handler(apigw_event_post_cpf, lambda_context())
     
     assert ret["statusCode"] == 404
     assert json.loads(ret["body"]) == {"message": "Cliente não encontrado"}
-    mock_get_customer.assert_called_once_with("12345678909")
+    mock_get_secret.assert_called_once_with("test_secret")
+    mock_get_customer.assert_called_once_with("12345678909", mock_secrets)
 
 
 def test_generate_token_returns_400_if_cpf_is_missing(mocker: MockerFixture) -> None:
     """
     Tests if a 400 is returned if the CPF is not in the request body.
     """
+    mock_secrets = {"host": "localhost", "jwt_secret": "secret"}
     # Create an event with an empty body and necessary keys for powertools
     event: Dict[str, Any] = {
         "body": json.dumps({}),
@@ -71,8 +75,10 @@ def test_generate_token_returns_400_if_cpf_is_missing(mocker: MockerFixture) -> 
         "headers": {"Content-Type": "application/json"},
         "requestContext": {"httpMethod": "POST", "path": "/"},
     }
+    mock_get_secret = mocker.patch("app.app.get_secret", return_value=mock_secrets)
     
-    ret: Dict[str, Any] = lambda_handler(event, lambda_context()) # Updated call
+    ret: Dict[str, Any] = lambda_handler(event, lambda_context())
     
     assert ret["statusCode"] == 400
     assert json.loads(ret["body"]) == {"message": "CPF não informado"}
+    mock_get_secret.assert_called_once_with("test_secret")
