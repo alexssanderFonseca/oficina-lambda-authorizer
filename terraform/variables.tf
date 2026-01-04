@@ -13,12 +13,13 @@ variable "project_name" {
 variable "rds_secret_arn" {
   description = "The ARN of the RDS secret containing database credentials."
   type        = string
+  default     = "YOUR_RDS_SECRET_ARN_HERE"
 }
 
 variable "existing_api_gateway_name" {
   description = "The name of the existing API Gateway to integrate with the Lambda authorizer."
   type        = string
-  default = "oficina-api"
+  default     = "YOUR_API_GATEWAY_NAME_HERE"
 }
 
 variable "lambda_zip_path" {

@@ -92,7 +92,7 @@ resource "aws_lambda_function" "authorizer" {
   environment {
     variables = {
       SECRET_NAME = "rds-academico-credentials-1"
-      DBName      = "db_staging" # Adjust as needed, or create a map
+      DBName      = "db_prod"
     }
   }
 
