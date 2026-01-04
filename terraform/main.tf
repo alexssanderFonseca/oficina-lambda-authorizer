@@ -123,7 +123,7 @@ resource "aws_lambda_function" "authorizer" {
   environment {
     variables = {
       SECRET_NAME = "secrets"
-      DBName      = "oficinadb"
+      DB_NAME      = "oficinadb"
     }
   }
 
