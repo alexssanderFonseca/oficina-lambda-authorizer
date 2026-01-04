@@ -3,15 +3,13 @@ import datetime
 import os
 from typing import Dict, Any
 
-# TODO: Store this secret securely, for example in AWS Secrets Manager
-JWT_SECRET: str | None = os.environ.get("JWT_SECRET")
-
-def generate_jwt(user_id: str) -> str:
+def generate_jwt(user_id: str, jwt_secret: str) -> str:
     """
     Generates a JWT token for a given user ID.
 
     Args:
         user_id: The user's unique identifier (e.g., a UUID) to include in the token payload.
+        jwt_secret: The secret key to sign the JWT.
 
     Returns:
         A JWT token string.
@@ -20,5 +18,5 @@ def generate_jwt(user_id: str) -> str:
         'sub': user_id,
         'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)
     }
-    token: str = jwt.encode(payload, JWT_SECRET, algorithm="HS256")
+    token: str = jwt.encode(payload, jwt_secret, algorithm="HS256")
     return token
