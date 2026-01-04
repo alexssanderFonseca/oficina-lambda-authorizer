@@ -26,3 +26,9 @@ variable "lambda_zip_path" {
   description = "The path to the Lambda function's deployment package (zip file)."
   type        = string
 }
+
+variable "rds_security_group_id" {
+  description = "The ID of the security group associated with the RDS instance."
+  type        = string
+  default = "sg-07b8a78b2019bb99c"
+}

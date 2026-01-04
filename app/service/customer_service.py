@@ -22,9 +22,11 @@ def get_customer_by_cpf(cpf: str, db_credentials: Dict[str, Any]) -> Optional[Di
     """
     conn = None
     try:
+        db_name = os.environ.get("DB_NAME")
+        logger.info(f"Connecting to database with host: {db_credentials.get('host')}, user: {db_credentials.get('username')}, dbname: {db_name}")
         conn = psycopg2.connect(
             host=db_credentials.get("host"),
-            dbname=os.environ.get("DB_NAME"),
+            dbname=db_name,
             user=db_credentials.get("username"),
             password=db_credentials.get("password"),
             port=db_credentials.get("port", "5432")

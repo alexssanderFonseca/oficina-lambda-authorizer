@@ -79,6 +79,31 @@ resource "aws_s3_object" "lambda_package" {
   source = var.lambda_zip_path
 }
 
+resource "aws_security_group" "lambda_sg" {
+  name        = "${var.project_name}-lambda-sg"
+  description = "Security group for the Lambda function"
+  
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.project_name}-lambda-sg"
+  }
+}
+
+resource "aws_security_group_rule" "allow_lambda_to_rds" {
+  type                     = "ingress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.lambda_sg.id
+  security_group_id        = var.rds_security_group_id
+}
+
 # Lambda Function
 resource "aws_lambda_function" "authorizer" {
   function_name = "${var.project_name}-function"
@@ -88,6 +113,11 @@ resource "aws_lambda_function" "authorizer" {
   s3_bucket     = aws_s3_object.lambda_package.bucket
   s3_key        = aws_s3_object.lambda_package.key
   source_code_hash = filebase64sha256(var.lambda_zip_path)
+
+  vpc_config {
+    subnet_ids         = local.private_subnets
+    security_group_ids = [aws_security_group.lambda_sg.id]
+  }
 
   environment {
     variables = {
