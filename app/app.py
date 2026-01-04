@@ -37,6 +37,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
         
         logger.info("Getting secrets")
         secrets = get_secret(secret_name)
+        logger.info(f"Secrets retornados: {secrets}")
         db_credentials = secrets
         jwt_secret = secrets.get("jwt_secret")
         if not jwt_secret:
