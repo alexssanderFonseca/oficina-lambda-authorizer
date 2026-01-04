@@ -30,13 +30,18 @@ def _build_response(status_code: int, body: Dict[str, Any]) -> Dict[str, Any]:
 @metrics.log_metrics(capture_cold_start_metric=True)
 def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, Any]:
     try:
+        logger.info("Lambda handler started")
         secret_name = os.environ.get("SECRET_NAME")
         if not secret_name:
             raise ValueError("SECRET_NAME environment variable not set.")
         
+        logger.info("Getting secrets")
         secrets = get_secret(secret_name)
         db_credentials = secrets
         jwt_secret = secrets.get("jwt_secret")
+        if not jwt_secret:
+            raise ValueError("jwt_secret not found in secrets.")
+        logger.info("Secrets obtained")
 
         request_body: Dict[str, Any] = json.loads(event.get("body", "{}"))
         cpf: Optional[str] = request_body.get('cpf')
@@ -45,12 +50,14 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
             logger.warning("CPF not provided in request body")
             return _build_response(400, {"message": "CPF não informado"})
 
+        logger.info(f"Getting customer for CPF: {cpf}")
         customer: Optional[Dict[str, Any]] = get_customer_by_cpf(cpf, db_credentials)
 
         if customer and customer.get('id'):
             user_id: str = customer['id']
             logger.info(f"Customer found for CPF. Generating token for user ID: {user_id}")
             token: str = generate_jwt(user_id, jwt_secret)
+            logger.info("Token generated successfully")
             return _build_response(200, {"token": token})
         else:
             logger.info(f"Customer not found for CPF: {cpf}")
